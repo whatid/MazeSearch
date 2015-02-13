@@ -7,7 +7,7 @@ import java.util.Scanner;
 import java.util.Queue;
 import java.util.LinkedList;
 import java.lang.StringBuilder;
-import java.io.PrintStream;
+import java.util.Deque;
 
 /**
  * File created on 2/7/15. Maze solver program. Input is a maze in text file format.
@@ -42,6 +42,13 @@ public class maze_solver {
             for (int j = 0; j < visited[i].length; j++)
                 visited[i][j] = false;
         }
+
+        /*
+           Note about finding maze text files:
+           Use the commented out code below to find file relative to your own directory.
+           The string currently used is my the location of the file on my computer
+         */
+
         /* System.out.println(System.getProperty("user.dir")); */
         File file = new File("/Users/fwirjo/IdeaProjects/CS440_MP1/src/MP1/smallMaze.txt");
 
@@ -73,6 +80,50 @@ public class maze_solver {
             error.printStackTrace();
         }
         return start;
+    }
+
+    private static Node dfs(boolean[][] visited, cell[][] maze, Node start) {
+
+        Deque<Node> stack = new LinkedList<Node>();
+
+        stack.push(start);
+
+        Node end = null;
+
+        while (!stack.isEmpty()) {
+            Node cur = stack.pop();
+            visited[cur.x][cur.y] = true;
+
+            //found end point
+            if (maze[cur.x][cur.y] == cell.END) {
+                end = cur;
+                return end;
+            } else {
+
+                //check all four neighbors
+                if (cur.x + 1 < maze.length) {
+                    if (maze[cur.x + 1][cur.y] != cell.WALL && !visited[cur.x + 1][cur.y]) {
+                        stack.push(new Node(cur.x + 1, cur.y, cur));
+                    }
+                }
+                if (cur.x - 1 >= 0) {
+                    if (maze[cur.x - 1][cur.y] != cell.WALL && !visited[cur.x - 1][cur.y]) {
+                        stack.push(new Node(cur.x - 1, cur.y, cur));
+                    }
+                }
+                if (cur.y + 1 < maze[0].length) {
+                    if (maze[cur.x][cur.y + 1] != cell.WALL && !visited[cur.x][cur.y + 1]) {
+                        stack.push(new Node(cur.x, cur.y + 1, cur));
+                    }
+                }
+                if (cur.y - 1 >= 0) {
+                    if (maze[cur.x][cur.y - 1] != cell.WALL && !visited[cur.x][cur.y - 1]) {
+                        stack.push(new Node(cur.x, cur.y - 1, cur));
+                    }
+                }
+            }
+        }
+        return end;
     }
 
     private static Node bfs(boolean[][] visited, cell[][] maze, Node start) {
@@ -121,15 +172,21 @@ public class maze_solver {
 
     public static void main(String[] args) {
 
+        /* The 2D arrays work for the small maze.
+           For now, just manually enter the size of the mazes..lol
+         */
+
         boolean[][] visited = new boolean[10][22];
         cell[][] maze = new cell[10][22];
         Node start = null;
         Node end = null;
         start = maze_parser(visited, maze);
 
-        //bfs
+
+        // to test bfs or dfs, change the function call below.
+
         if (start != null){
-            end = bfs(visited, maze, start);
+            end = dfs(visited, maze, start);
 
             //trace back execution
             if (end != null) {
