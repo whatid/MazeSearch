@@ -8,6 +8,9 @@ import java.util.Queue;
 import java.util.LinkedList;
 import java.lang.StringBuilder;
 import java.util.Deque;
+import java.util.PriorityQueue;
+import java.lang.Math;
+import java.util.Comparator;
 
 /**
  * File created on 2/7/15. Maze solver program. Input is a maze in text file format.
@@ -22,6 +25,7 @@ public class maze_solver {
     private static class Node {
         int x;
         int y;
+        int path_cost, estimated_cost, total_cost;
         Node parent;
 
         public Node(int x, int y, Node parent) {
@@ -32,10 +36,22 @@ public class maze_solver {
 
     }
 
-    private static Node maze_parser(boolean[][] visited, cell[][] maze) {
+    private static class Pair {
+        private final Node start;
+        private final Node end;
 
-        //variable to hold starting position
+        public Pair(Node start, Node end) {
+            this.start = start;
+            this.end = end;
+        }
+    }
+
+    private static Pair maze_parser(boolean[][] visited, cell[][] maze) {
+
+        //variable to hold return values
+        Pair result;
         Node start = null;
+        Node end = null;
 
         // initialize visited array
         for (int i = 0; i < visited.length; i++) {
@@ -68,9 +84,11 @@ public class maze_solver {
                         maze[rows][i] = cell.START;
                     }
                     // ending point .
-                    else if (s.charAt(i) == '.')
+                    else if (s.charAt(i) == '.') {
+                        end = new Node(rows, i, null);
                         maze[rows][i] = cell.END;
                         // space
+                    }
                     else
                         maze[rows][i] = cell.SPACE;
                 }
@@ -79,10 +97,13 @@ public class maze_solver {
         } catch (FileNotFoundException error) {
             error.printStackTrace();
         }
-        return start;
+
+        result = new Pair(start, end);
+
+        return result;
     }
 
-    private static Node dfs(boolean[][] visited, cell[][] maze, Node start) {
+    private static void dfs(boolean[][] visited, cell[][] maze, Node start) {
 
         Deque<Node> stack = new LinkedList<Node>();
 
@@ -97,7 +118,11 @@ public class maze_solver {
             //found end point
             if (maze[cur.x][cur.y] == cell.END) {
                 end = cur;
-                return end;
+                while(end.parent != null){
+                    end = end.parent;
+                    maze[end.x][end.y] = cell.DOT;
+                }
+                return;
             } else {
 
                 //check all four neighbors
@@ -123,10 +148,9 @@ public class maze_solver {
                 }
             }
         }
-        return end;
     }
 
-    private static Node bfs(boolean[][] visited, cell[][] maze, Node start) {
+    private static void bfs(boolean[][] visited, cell[][] maze, Node start) {
 
         Queue<Node> q = new LinkedList<Node>();
 
@@ -141,7 +165,11 @@ public class maze_solver {
             //found end point
             if (maze[cur.x][cur.y] == cell.END) {
                 end = cur;
-                return end;
+                while(end.parent != null){
+                    end = end.parent;
+                    maze[end.x][end.y] = cell.DOT;
+                }
+                return;
             } else {
 
                 //check all four neighbors
@@ -167,7 +195,157 @@ public class maze_solver {
                 }
             }
         }
-        return end;
+    }
+
+
+    private static int heuristic (Node cur, Node end) {
+        //manhattan distance
+        return (Math.abs(cur.x - end.x) + Math.abs(cur.y - end.y));
+    }
+
+    public static class TotalCost implements Comparator<Node> {
+        @Override
+        public int compare(Node first, Node second) {
+            if (first.total_cost < second.total_cost) {
+                return -1;
+            }
+            else if (first.total_cost > second.total_cost) {
+                return 1;
+            }
+            else
+                return 0;
+        }
+    }
+
+    public static class EstimatedCost implements Comparator<Node> {
+        @Override
+        public int compare(Node first, Node second) {
+            if (first.estimated_cost < second.estimated_cost) {
+                return -1;
+            }
+            else if (first.estimated_cost > second.estimated_cost) {
+                return 1;
+            }
+            else
+                return 0;
+        }
+    }
+
+    private static void greedy_bfs(Node start, Node end, cell [][] maze, boolean [][] visited) {
+        Comparator<Node> comp = new EstimatedCost();
+        PriorityQueue<Node> q = new PriorityQueue<Node>(1000, comp);
+        q.add(start);
+        start.estimated_cost = heuristic(start, end);
+
+        while (!q.isEmpty()) {
+            Node cur = q.remove();
+            visited[cur.x][cur.y] = true;
+
+            if (maze[cur.x][cur.y] == cell.END) {
+                while(cur.parent != null){
+                    cur = cur.parent;
+                    maze[cur.x][cur.y] = cell.DOT;
+                }
+                return;
+            }
+            else {
+                if (cur.x + 1 < maze.length) {
+                    if (maze[cur.x + 1][cur.y] != cell.WALL && !visited[cur.x + 1][cur.y]) {
+                        Node temp = new Node(cur.x + 1, cur.y, cur);
+                        temp.estimated_cost = heuristic(cur, end);
+                        q.add(temp);
+                    }
+                }
+                if (cur.x - 1 >= 0) {
+                    if (maze[cur.x - 1][cur.y] != cell.WALL && !visited[cur.x - 1][cur.y]) {
+                        Node temp = new Node(cur.x + 1, cur.y, cur);
+                        temp.estimated_cost = heuristic(cur, end);
+                        q.add(temp);
+                    }
+                }
+                if (cur.y + 1 < maze[0].length) {
+                    if (maze[cur.x][cur.y + 1] != cell.WALL && !visited[cur.x][cur.y + 1]) {
+                        Node temp = new Node(cur.x + 1, cur.y, cur);
+                        temp.estimated_cost = heuristic(cur, end);
+                        q.add(temp);
+                    }
+                }
+                if (cur.y - 1 >= 0) {
+                    if (maze[cur.x][cur.y - 1] != cell.WALL && !visited[cur.x][cur.y - 1]) {
+                        Node temp = new Node(cur.x + 1, cur.y, cur);
+                        temp.estimated_cost = heuristic(cur, end);
+                        q.add(temp);
+                    }
+                }
+
+            }
+        }
+    }
+
+    private static void A_star (Node start, Node end, cell [][] maze, boolean[][] visited) {
+
+        Comparator<Node> comp = new TotalCost();
+        PriorityQueue<Node> q = new PriorityQueue<Node>(1000, comp);
+        q.add(start);
+
+        start.path_cost = 0;
+        start.estimated_cost = heuristic(start,end);
+        start.total_cost = start.path_cost + start.estimated_cost;
+
+        while (!q.isEmpty()) {
+
+            // remove from open set and mark visited
+            Node cur = q.remove();
+            visited[cur.x][cur.y] = true;
+
+
+            if (maze[cur.x][cur.y] == cell.END) {
+                while(cur.parent != null){
+                    cur = cur.parent;
+                    maze[cur.x][cur.y] = cell.DOT;
+                }
+                return;
+            }
+            else {
+
+                // check all four neighbors
+                if (cur.x + 1 < maze.length) {
+                    if (maze[cur.x + 1][cur.y] != cell.WALL && !visited[cur.x + 1][cur.y]) {
+                        Node temp = new Node(cur.x + 1, cur.y, cur);
+                        temp.path_cost = cur.path_cost + 1;
+                        temp.total_cost = temp.path_cost + heuristic(temp, end);
+                        q.add(temp);
+                    }
+                }
+                if (cur.x - 1 >= 0) {
+                    if (maze[cur.x - 1][cur.y] != cell.WALL && !visited[cur.x - 1][cur.y]) {
+                        Node temp = new Node(cur.x - 1, cur.y, cur);
+                        temp.path_cost = cur.path_cost + 1;
+                        temp.total_cost = temp.path_cost + heuristic(temp, end);
+                        q.add(temp);
+                    }
+                }
+                if (cur.y + 1 < maze[0].length) {
+                    if (maze[cur.x][cur.y + 1] != cell.WALL && !visited[cur.x][cur.y + 1]) {
+                        Node temp = new Node(cur.x, cur.y + 1, cur);
+                        temp.path_cost = cur.path_cost + 1;
+                        temp.total_cost = temp.path_cost + heuristic(temp, end);
+                        q.add(temp);
+                    }
+                }
+                if (cur.y - 1 >= 0) {
+                    if (maze[cur.x][cur.y - 1] != cell.WALL && !visited[cur.x][cur.y - 1]) {
+                        Node temp = new Node(cur.x, cur.y - 1, cur);
+                        temp.path_cost = cur.path_cost + 1;
+                        temp.total_cost = temp.path_cost + heuristic(temp, end);
+                        q.add(temp);
+                    }
+                }
+
+            }
+        }
+
+
     }
 
     public static void main(String[] args) {
@@ -178,25 +356,13 @@ public class maze_solver {
 
         boolean[][] visited = new boolean[10][22];
         cell[][] maze = new cell[10][22];
-        Node start = null;
-        Node end = null;
-        start = maze_parser(visited, maze);
+        Pair result = maze_parser(visited, maze);
+        Node start = result.start;
+        Node end = result.end;
 
+        // to test bfs or dfs, call the corresponding function call below.
 
-        // to test bfs or dfs, change the function call below.
-
-        if (start != null){
-            end = dfs(visited, maze, start);
-
-            //trace back execution
-            if (end != null) {
-                while(end.parent != null){
-                    end = end.parent;
-                    maze[end.x][end.y] = cell.DOT;
-                }
-
-            }
-        }
+        greedy_bfs(start, end, maze, visited);
 
         //print to console
 
