@@ -231,16 +231,24 @@ public class maze_solver {
         }
     }
 
+    // expands node that has the lowest value of the heuristic function.
+
     private static void greedy_bfs(Node start, Node end, cell [][] maze, boolean [][] visited) {
         Comparator<Node> comp = new EstimatedCost();
         PriorityQueue<Node> q = new PriorityQueue<Node>(1000, comp);
-        q.add(start);
+
         start.estimated_cost = heuristic(start, end);
+        q.add(start);
 
         while (!q.isEmpty()) {
+
+            // removes the node with the lowest heuristic value
             Node cur = q.remove();
+
+            //mark as visited
             visited[cur.x][cur.y] = true;
 
+            // found end point
             if (maze[cur.x][cur.y] == cell.END) {
                 while(cur.parent != null){
                     cur = cur.parent;
@@ -249,31 +257,34 @@ public class maze_solver {
                 return;
             }
             else {
+
+                // check neighbors, add to queue;
+
                 if (cur.x + 1 < maze.length) {
                     if (maze[cur.x + 1][cur.y] != cell.WALL && !visited[cur.x + 1][cur.y]) {
                         Node temp = new Node(cur.x + 1, cur.y, cur);
-                        temp.estimated_cost = heuristic(cur, end);
+                        temp.estimated_cost = heuristic(temp, end);
                         q.add(temp);
                     }
                 }
                 if (cur.x - 1 >= 0) {
                     if (maze[cur.x - 1][cur.y] != cell.WALL && !visited[cur.x - 1][cur.y]) {
-                        Node temp = new Node(cur.x + 1, cur.y, cur);
-                        temp.estimated_cost = heuristic(cur, end);
+                        Node temp = new Node(cur.x - 1, cur.y, cur);
+                        temp.estimated_cost = heuristic(temp, end);
                         q.add(temp);
                     }
                 }
                 if (cur.y + 1 < maze[0].length) {
                     if (maze[cur.x][cur.y + 1] != cell.WALL && !visited[cur.x][cur.y + 1]) {
-                        Node temp = new Node(cur.x + 1, cur.y, cur);
-                        temp.estimated_cost = heuristic(cur, end);
+                        Node temp = new Node(cur.x, cur.y + 1, cur);
+                        temp.estimated_cost = heuristic(temp, end);
                         q.add(temp);
                     }
                 }
                 if (cur.y - 1 >= 0) {
                     if (maze[cur.x][cur.y - 1] != cell.WALL && !visited[cur.x][cur.y - 1]) {
-                        Node temp = new Node(cur.x + 1, cur.y, cur);
-                        temp.estimated_cost = heuristic(cur, end);
+                        Node temp = new Node(cur.x, cur.y - 1, cur);
+                        temp.estimated_cost = heuristic(temp, end);
                         q.add(temp);
                     }
                 }
@@ -289,8 +300,7 @@ public class maze_solver {
         q.add(start);
 
         start.path_cost = 0;
-        start.estimated_cost = heuristic(start,end);
-        start.total_cost = start.path_cost + start.estimated_cost;
+        start.total_cost = start.path_cost + heuristic(start, end);
 
         while (!q.isEmpty()) {
 
@@ -360,9 +370,16 @@ public class maze_solver {
         Node start = result.start;
         Node end = result.end;
 
-        // to test bfs or dfs, call the corresponding function call below.
+        // To test search algorithms call the corresponding function below.
+        // test one at a time......
 
+
+        // A_star(start, end, maze, visited);
         greedy_bfs(start, end, maze, visited);
+        // bfs(visited, maze, start);
+        // dfs(visited, maze, start);
+
+
 
         //print to console
 
