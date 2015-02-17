@@ -105,6 +105,8 @@ public class maze_solver {
 
     private static void dfs(boolean[][] visited, cell[][] maze, Node start) {
 
+        int path_cost = 0;
+        int expanded_nodes = 0;
         Deque<Node> stack = new LinkedList<Node>();
 
         stack.push(start);
@@ -113,6 +115,7 @@ public class maze_solver {
 
         while (!stack.isEmpty()) {
             Node cur = stack.pop();
+            expanded_nodes++;
             visited[cur.x][cur.y] = true;
 
             //found end point
@@ -121,7 +124,10 @@ public class maze_solver {
                 while(end.parent != null){
                     end = end.parent;
                     maze[end.x][end.y] = cell.DOT;
+                    path_cost++;
                 }
+                System.out.println("path cost: " + path_cost);
+                System.out.println("expanded nodes: " + expanded_nodes);
                 return;
             } else {
 
@@ -156,10 +162,13 @@ public class maze_solver {
 
         q.add(start);
 
+        int path_cost = 0;
+        int expanded_nodes = 0;
         Node end = null;
 
         while (!q.isEmpty()) {
             Node cur = q.remove();
+            expanded_nodes++;
             visited[cur.x][cur.y] = true;
 
             //found end point
@@ -168,7 +177,10 @@ public class maze_solver {
                 while(end.parent != null){
                     end = end.parent;
                     maze[end.x][end.y] = cell.DOT;
+                    path_cost++;
                 }
+                System.out.println("path cost:" + path_cost);
+                System.out.println("expanded nodes: " + expanded_nodes);
                 return;
             } else {
 
@@ -236,7 +248,8 @@ public class maze_solver {
     private static void greedy_bfs(Node start, Node end, cell [][] maze, boolean [][] visited) {
         Comparator<Node> comp = new EstimatedCost();
         PriorityQueue<Node> q = new PriorityQueue<Node>(1000, comp);
-
+        int path_cost = 0;
+        int expanded_nodes = 0;
         start.estimated_cost = heuristic(start, end);
         q.add(start);
 
@@ -244,7 +257,7 @@ public class maze_solver {
 
             // removes the node with the lowest heuristic value
             Node cur = q.remove();
-
+            expanded_nodes++;
             //mark as visited
             visited[cur.x][cur.y] = true;
 
@@ -253,7 +266,10 @@ public class maze_solver {
                 while(cur.parent != null){
                     cur = cur.parent;
                     maze[cur.x][cur.y] = cell.DOT;
+                    path_cost++;
                 }
+                System.out.println("path cost: " + path_cost);
+                System.out.println("expanded nodes: " + expanded_nodes);
                 return;
             }
             else {
@@ -298,7 +314,8 @@ public class maze_solver {
         Comparator<Node> comp = new TotalCost();
         PriorityQueue<Node> q = new PriorityQueue<Node>(1000, comp);
         q.add(start);
-
+        int path_cost = 0;
+        int expanded_nodes = 0;
         start.path_cost = 0;
         start.total_cost = start.path_cost + heuristic(start, end);
 
@@ -306,6 +323,7 @@ public class maze_solver {
 
             // remove from open set and mark visited
             Node cur = q.remove();
+            expanded_nodes++;
             visited[cur.x][cur.y] = true;
 
 
@@ -313,7 +331,10 @@ public class maze_solver {
                 while(cur.parent != null){
                     cur = cur.parent;
                     maze[cur.x][cur.y] = cell.DOT;
+                    path_cost++;
                 }
+                System.out.println("path cost: " + path_cost);
+                System.out.println("expanded nodes: " + expanded_nodes);
                 return;
             }
             else {
@@ -374,10 +395,10 @@ public class maze_solver {
         // test one at a time......
 
 
-        // A_star(start, end, maze, visited);
-        greedy_bfs(start, end, maze, visited);
-        // bfs(visited, maze, start);
-        // dfs(visited, maze, start);
+        //A_star(start, end, maze, visited);
+        //greedy_bfs(start, end, maze, visited);
+        //bfs(visited, maze, start);
+        //dfs(visited, maze, start);
 
 
 
