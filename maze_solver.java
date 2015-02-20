@@ -1,4 +1,4 @@
-package MP1;
+//package MP1;
 
 import java.lang.String;
 import java.io.File;
@@ -65,8 +65,8 @@ public class maze_solver {
            The string currently used is my the location of the file on my computer
          */
 
-        /* System.out.println(System.getProperty("user.dir")); */
-        File file = new File("/Users/fwirjo/IdeaProjects/CS440_MP1/src/MP1/smallMaze.txt");
+         System.out.println(System.getProperty("hhhahha"));
+        File file = new File("/Users/donezio/IdeaProjects/MazeSearch/smallMaze.txt");
 
         try {
             Scanner it = new Scanner(file);
@@ -126,6 +126,7 @@ public class maze_solver {
                     maze[end.x][end.y] = cell.DOT;
                     path_cost++;
                 }
+                maze[end.x][end.y] = cell.START;
                 System.out.println("path cost: " + path_cost);
                 System.out.println("expanded nodes: " + expanded_nodes);
                 return;
@@ -179,6 +180,7 @@ public class maze_solver {
                     maze[end.x][end.y] = cell.DOT;
                     path_cost++;
                 }
+                maze[end.x][end.y] = cell.START;
                 System.out.println("path cost:" + path_cost);
                 System.out.println("expanded nodes: " + expanded_nodes);
                 return;
@@ -268,6 +270,7 @@ public class maze_solver {
                     maze[cur.x][cur.y] = cell.DOT;
                     path_cost++;
                 }
+                maze[cur.x][cur.y] = cell.START;
                 System.out.println("path cost: " + path_cost);
                 System.out.println("expanded nodes: " + expanded_nodes);
                 return;
@@ -333,6 +336,7 @@ public class maze_solver {
                     maze[cur.x][cur.y] = cell.DOT;
                     path_cost++;
                 }
+                maze[cur.x][cur.y] = cell.START;
                 System.out.println("path cost: " + path_cost);
                 System.out.println("expanded nodes: " + expanded_nodes);
                 return;
@@ -397,8 +401,8 @@ public class maze_solver {
 
         //A_star(start, end, maze, visited);
         //greedy_bfs(start, end, maze, visited);
-        //bfs(visited, maze, start);
-        //dfs(visited, maze, start);
+       // bfs(visited, maze, start);
+       //dfs(visited, maze, start);
 
 
 
@@ -421,7 +425,7 @@ public class maze_solver {
                         output.append("P");
                         break;
                     case END:
-                        output.append(".");
+                        output.append("E");
                         break;
                     case SPACE:
                         output.append(" ");
