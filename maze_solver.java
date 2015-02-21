@@ -1,4 +1,4 @@
-//package MP1;
+package MP1;
 
 import java.lang.String;
 import java.io.File;
@@ -19,7 +19,7 @@ public class maze_solver {
 
 
     public enum cell {
-        WALL, SPACE, START, END, DOT
+        WALL, SPACE, START, END, DOT,SPAN
     }
 
     private static class Node {
@@ -66,7 +66,7 @@ public class maze_solver {
          */
 
          System.out.println(System.getProperty("hhhahha"));
-        File file = new File("/Users/donezio/IdeaProjects/MazeSearch/smallMaze.txt");
+        File file = new File("/Users/donezio/IdeaProjects/MazeSearch/good4astart.txt");
 
         try {
             Scanner it = new Scanner(file);
@@ -117,6 +117,12 @@ public class maze_solver {
             Node cur = stack.pop();
             expanded_nodes++;
             visited[cur.x][cur.y] = true;
+
+            if ( maze[cur.x][cur.y] != cell.END  ){
+                maze[cur.x][cur.y] = cell.SPAN;
+            }
+
+
 
             //found end point
             if (maze[cur.x][cur.y] == cell.END) {
@@ -171,6 +177,12 @@ public class maze_solver {
             Node cur = q.remove();
             expanded_nodes++;
             visited[cur.x][cur.y] = true;
+
+            if ( maze[cur.x][cur.y] != cell.END  ){
+                maze[cur.x][cur.y] = cell.SPAN;
+            }
+
+
 
             //found end point
             if (maze[cur.x][cur.y] == cell.END) {
@@ -262,6 +274,12 @@ public class maze_solver {
             expanded_nodes++;
             //mark as visited
             visited[cur.x][cur.y] = true;
+            if ( maze[cur.x][cur.y] != cell.END  ){
+                maze[cur.x][cur.y] = cell.SPAN;
+            }
+
+
+
 
             // found end point
             if (maze[cur.x][cur.y] == cell.END) {
@@ -329,6 +347,11 @@ public class maze_solver {
             expanded_nodes++;
             visited[cur.x][cur.y] = true;
 
+            if ( maze[cur.x][cur.y] != cell.END  ){
+                maze[cur.x][cur.y] = cell.SPAN;
+             }
+
+
 
             if (maze[cur.x][cur.y] == cell.END) {
                 while(cur.parent != null){
@@ -389,8 +412,8 @@ public class maze_solver {
            For now, just manually enter the size of the mazes..lol
          */
 
-        boolean[][] visited = new boolean[10][22];
-        cell[][] maze = new cell[10][22];
+        boolean[][] visited = new boolean[11][30]; //10,22    //11/30
+        cell[][] maze = new cell[11][30];
         Pair result = maze_parser(visited, maze);
         Node start = result.start;
         Node end = result.end;
@@ -399,10 +422,10 @@ public class maze_solver {
         // test one at a time......
 
 
-        //A_star(start, end, maze, visited);
-        //greedy_bfs(start, end, maze, visited);
-       // bfs(visited, maze, start);
-       //dfs(visited, maze, start);
+      //A_star(start, end, maze, visited);
+      greedy_bfs(start, end, maze, visited);
+       //bfs(visited, maze, start);
+        //  dfs(visited, maze, start);
 
 
 
@@ -429,6 +452,9 @@ public class maze_solver {
                         break;
                     case SPACE:
                         output.append(" ");
+                        break;
+                    case SPAN:
+                        output.append("*");
                         break;
                     default:
                         break;
