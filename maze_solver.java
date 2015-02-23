@@ -20,7 +20,7 @@ public class maze_solver {
 
 
     public enum cell {
-        WALL, SPACE, START, END, DOT,SPAN
+        WALL, SPACE, START, END, DOT, SPAN, NUMBER
     }
 
     private static class Node {
@@ -67,7 +67,7 @@ public class maze_solver {
          */
 
         //System.out.println(System.getProperty("user.dir"));
-        File file = new File("/Users/fwirjo/IdeaProjects/MazeSearch/smallSearch.txt");
+        File file = new File("/Users/fwirjo/IdeaProjects/MazeSearch/bigSearch.txt");
 
         try {
             Scanner it = new Scanner(file);
@@ -340,8 +340,12 @@ public class maze_solver {
         int path_cost = 0;
         int expanded_nodes = 0;
         start.path_cost = 0;
-        boolean finish = false;
+        boolean startNode = true;
         int index = 0;
+
+        int idx = 0;
+
+       // Node alt = start;
 
         int min = 0;
         boolean first = true;
@@ -363,10 +367,11 @@ public class maze_solver {
 
         Node end = nextGoal;
 
+        System.out.println("start-x: " + start.x + ", start-y: " + start.y);
 
         // check if there are more dots to the left or the right of starting position
 
-
+        //boolean startNode = true;
         start.total_cost = start.path_cost + heuristic(start, end);
 
         while (!q.isEmpty()) {
@@ -378,9 +383,33 @@ public class maze_solver {
 
             if (maze[cur.x][cur.y] == cell.DOT) {
                 //System.out.println(storage.size());
+                System.out.println("goal-x: " + cur.x + ", goal-y: " + cur.y);
+                maze[cur.x][cur.y] = cell.NUMBER;
+
+                Node tempnode = cur;
+                while (tempnode.parent != null) {
+                    tempnode = tempnode.parent;
+                    if (maze[tempnode.x][tempnode.y] == cell.NUMBER || maze[tempnode.x][tempnode.y] == cell.START) {
+                        path_cost++;
+                        continue;
+                    }
+                    else {
+                        maze[tempnode.x][tempnode.y] = cell.SPAN;
+                        path_cost++;
+                    }
+
+                }
+                if (startNode == true) {
+                    maze[tempnode.x][tempnode.y] = cell.START;
+                    startNode = false;
+                }
                 storage.remove(index);
+                System.out.println("tempnode coords " + "x: " + tempnode.x + "y: " + tempnode.y);
+                System.out.println("curnode coords " + "x: " + cur.x + "y: " + cur.y);
                 if (storage.size() == 0) {
-                    finish = true;
+                    System.out.println("path cost: " + path_cost);
+                    System.out.println("expanded nodes: " + expanded_nodes);
+                    return;
                 } else {
                     for (int a = 0; a < visited.length; a++) {
                         for (int b = 0; b < visited[a].length; b++)
@@ -390,6 +419,7 @@ public class maze_solver {
                     first = true;
                     nextGoal = null;
                     cur.path_cost = 0;
+                    cur.parent = null;
                     index = 0;
                     for (int i = 0; i < storage.size(); i++) {
                         int temp = cur.path_cost + heuristic(cur, storage.elementAt(i));
@@ -407,19 +437,30 @@ public class maze_solver {
                     }
                     end = nextGoal;
                     cur.total_cost = cur.path_cost + heuristic(cur, end);
+                    //System.out.println("new_start-x: " + cur.x + ", new_start-y: " + cur.y);
+                    //if (cur.parent == null) System.out.println("wtf");
+                    //System.out.println("new_start-x: " + (cur.parent).x + ", new_start-y: " + (cur.parent).y);
+                    //alt = cur;
+                    q.clear();
+                    q.add(cur);
                     continue;
                 }
+                /*
                 if (finish) {
                     while (cur.parent != null) {
                         cur = cur.parent;
-                        maze[cur.x][cur.y] = cell.SPAN;
-                        path_cost++;
+                        if (maze[cur.x][cur.y] == cell.NUMBER) {
+                            path_cost++;
+                            continue;
+                        }
+                        else {
+                            maze[cur.x][cur.y] = cell.DOT;
+                            path_cost++;
+                        }
+
                     }
-                    maze[cur.x][cur.y] = cell.START;
-                    System.out.println("path cost: " + path_cost);
-                    System.out.println("expanded nodes: " + expanded_nodes);
-                    return;
                 }
+                */
             }
             else {
 
@@ -469,11 +510,12 @@ public class maze_solver {
            For now, just manually enter the size of the mazes..lol
          */
 
-        boolean[][] visited = new boolean[5][20]; //10,22    //11/30   //5/20
-        cell[][] maze = new cell[5][20];
+        boolean[][] visited = new boolean[15][31]; //10,22    //11/30   //5/20
+        cell[][] maze = new cell[15][31];
         Pair result = maze_parser(visited, maze);
         Node start = result.start;
         Vector<Node> storage = result.dots;
+
 
         // To test search algorithms call the corresponding function below.
         // test one at a time......
@@ -484,13 +526,12 @@ public class maze_solver {
       //bfs(visited, maze, start);
       //  dfs(visited, maze, start);
 
-
-
         //print to console
 
         StringBuilder output = new StringBuilder();
 
         int rows = 0;
+        char letter = 'a';
 
         while (rows < maze.length) {
             for (int y = 0; y < maze[0].length; y++) {
@@ -506,6 +547,9 @@ public class maze_solver {
                         break;
                     case END:
                         output.append("E");
+                        break;
+                    case NUMBER:
+                        output.append(letter++);
                         break;
                     case SPACE:
                         output.append(" ");
