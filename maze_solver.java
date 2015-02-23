@@ -341,6 +341,7 @@ public class maze_solver {
         int expanded_nodes = 0;
         start.path_cost = 0;
         boolean finish = false;
+        int index = 0;
 
         int min = 0;
         boolean first = true;
@@ -351,10 +352,12 @@ public class maze_solver {
                 min = temp;
                 first = false;
                 nextGoal = new Node(storage.elementAt(i).x, storage.elementAt(i).y, null);
+                index = i;
             }
             if (temp < min) {
                 min = temp;
                 nextGoal = new Node(storage.elementAt(i).x, storage.elementAt(i).y, null);
+                index = i;
             }
         }
 
@@ -373,9 +376,9 @@ public class maze_solver {
             expanded_nodes++;
             visited[cur.x][cur.y] = true;
 
-
             if (maze[cur.x][cur.y] == cell.DOT) {
-                storage.remove(end);
+                //System.out.println(storage.size());
+                storage.remove(index);
                 if (storage.size() == 0) {
                     finish = true;
                 } else {
@@ -387,24 +390,29 @@ public class maze_solver {
                     first = true;
                     nextGoal = null;
                     cur.path_cost = 0;
+                    index = 0;
                     for (int i = 0; i < storage.size(); i++) {
                         int temp = cur.path_cost + heuristic(cur, storage.elementAt(i));
                         if (first) {
                             min = temp;
                             first = false;
-                            nextGoal = new Node(storage.elementAt(i).x, storage.elementAt(i).y, cur.parent);
+                            nextGoal = new Node(storage.elementAt(i).x, storage.elementAt(i).y, null);
+                            index = i;
                         }
                         if (temp < min) {
                             min = temp;
-                            nextGoal = new Node(storage.elementAt(i).x, storage.elementAt(i).y, cur.parent);
+                            nextGoal = new Node(storage.elementAt(i).x, storage.elementAt(i).y, null);
+                            index = i;
                         }
                     }
                     end = nextGoal;
+                    cur.total_cost = cur.path_cost + heuristic(cur, end);
+                    continue;
                 }
                 if (finish) {
                     while (cur.parent != null) {
                         cur = cur.parent;
-                        maze[cur.x][cur.y] = cell.DOT;
+                        maze[cur.x][cur.y] = cell.SPAN;
                         path_cost++;
                     }
                     maze[cur.x][cur.y] = cell.START;
@@ -461,7 +469,7 @@ public class maze_solver {
            For now, just manually enter the size of the mazes..lol
          */
 
-        boolean[][] visited = new boolean[5][20]; //10,22    //11/30
+        boolean[][] visited = new boolean[5][20]; //10,22    //11/30   //5/20
         cell[][] maze = new cell[5][20];
         Pair result = maze_parser(visited, maze);
         Node start = result.start;
