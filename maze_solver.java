@@ -11,6 +11,7 @@ import java.util.Deque;
 import java.util.PriorityQueue;
 import java.lang.Math;
 import java.util.Comparator;
+import java.util.Vector;
 
 /**
  * File created on 2/7/15. Maze solver program. Input is a maze in text file format.
@@ -25,7 +26,7 @@ public class maze_solver {
     private static class Node {
         int x;
         int y;
-        int path_cost, estimated_cost, total_cost;
+        int path_cost, estimated_cost, total_cost, distance /* distance traversed to reach up to N other nodes */;
         Node parent;
 
         public Node(int x, int y, Node parent) {
@@ -38,11 +39,11 @@ public class maze_solver {
 
     private static class Pair {
         private final Node start;
-        private final Node end;
+        private Vector<Node> dots = null;
 
-        public Pair(Node start, Node end) {
+        public Pair(Node start, Vector<Node> storage) {
             this.start = start;
-            this.end = end;
+            this.dots = storage;
         }
     }
 
@@ -51,7 +52,7 @@ public class maze_solver {
         //variable to hold return values
         Pair result;
         Node start = null;
-        Node end = null;
+        Vector<Node> storage = new Vector<Node>();
 
         // initialize visited array
         for (int i = 0; i < visited.length; i++) {
@@ -65,8 +66,8 @@ public class maze_solver {
            The string currently used is my the location of the file on my computer
          */
 
-         System.out.println(System.getProperty("hhhahha"));
-        File file = new File("/Users/donezio/IdeaProjects/MazeSearch/good4astart.txt");
+        //System.out.println(System.getProperty("user.dir"));
+        File file = new File("/Users/fwirjo/IdeaProjects/MazeSearch/smallSearch.txt");
 
         try {
             Scanner it = new Scanner(file);
@@ -85,8 +86,8 @@ public class maze_solver {
                     }
                     // ending point .
                     else if (s.charAt(i) == '.') {
-                        end = new Node(rows, i, null);
-                        maze[rows][i] = cell.END;
+                        storage.add(new Node(rows, i, null));
+                        maze[rows][i] = cell.DOT;
                         // space
                     }
                     else
@@ -98,7 +99,7 @@ public class maze_solver {
             error.printStackTrace();
         }
 
-        result = new Pair(start, end);
+        result = new Pair(start, storage);
 
         return result;
     }
@@ -229,6 +230,7 @@ public class maze_solver {
         return (Math.abs(cur.x - end.x) + Math.abs(cur.y - end.y));
     }
 
+
     public static class TotalCost implements Comparator<Node> {
         @Override
         public int compare(Node first, Node second) {
@@ -282,7 +284,7 @@ public class maze_solver {
 
 
             // found end point
-            if (maze[cur.x][cur.y] == cell.END) {
+            if (maze[cur.x][cur.y] == cell.DOT) {
                 while(cur.parent != null){
                     cur = cur.parent;
                     maze[cur.x][cur.y] = cell.DOT;
@@ -330,7 +332,7 @@ public class maze_solver {
         }
     }
 
-    private static void A_star (Node start, Node end, cell [][] maze, boolean[][] visited) {
+    private static void A_star (Node start, Vector<Node> storage, cell [][] maze, boolean[][] visited) {
 
         Comparator<Node> comp = new TotalCost();
         PriorityQueue<Node> q = new PriorityQueue<Node>(1000, comp);
@@ -338,6 +340,30 @@ public class maze_solver {
         int path_cost = 0;
         int expanded_nodes = 0;
         start.path_cost = 0;
+        boolean finish = false;
+
+        int min = 0;
+        boolean first = true;
+        Node nextGoal = null;
+        for (int i = 0; i < storage.size(); i++) {
+            int temp = start.path_cost + heuristic(start, storage.elementAt(i));
+            if (first) {
+                min = temp;
+                first = false;
+                nextGoal = new Node(storage.elementAt(i).x, storage.elementAt(i).y, null);
+            }
+            if (temp < min) {
+                min = temp;
+                nextGoal = new Node(storage.elementAt(i).x, storage.elementAt(i).y, null);
+            }
+        }
+
+        Node end = nextGoal;
+
+
+        // check if there are more dots to the left or the right of starting position
+
+
         start.total_cost = start.path_cost + heuristic(start, end);
 
         while (!q.isEmpty()) {
@@ -347,22 +373,45 @@ public class maze_solver {
             expanded_nodes++;
             visited[cur.x][cur.y] = true;
 
-            if ( maze[cur.x][cur.y] != cell.END  ){
-                maze[cur.x][cur.y] = cell.SPAN;
-             }
 
-
-
-            if (maze[cur.x][cur.y] == cell.END) {
-                while(cur.parent != null){
-                    cur = cur.parent;
-                    maze[cur.x][cur.y] = cell.DOT;
-                    path_cost++;
+            if (maze[cur.x][cur.y] == cell.DOT) {
+                storage.remove(end);
+                if (storage.size() == 0) {
+                    finish = true;
+                } else {
+                    for (int a = 0; a < visited.length; a++) {
+                        for (int b = 0; b < visited[a].length; b++)
+                            visited[a][b] = false;
+                    }
+                    min= 0;
+                    first = true;
+                    nextGoal = null;
+                    cur.path_cost = 0;
+                    for (int i = 0; i < storage.size(); i++) {
+                        int temp = cur.path_cost + heuristic(cur, storage.elementAt(i));
+                        if (first) {
+                            min = temp;
+                            first = false;
+                            nextGoal = new Node(storage.elementAt(i).x, storage.elementAt(i).y, cur.parent);
+                        }
+                        if (temp < min) {
+                            min = temp;
+                            nextGoal = new Node(storage.elementAt(i).x, storage.elementAt(i).y, cur.parent);
+                        }
+                    }
+                    end = nextGoal;
                 }
-                maze[cur.x][cur.y] = cell.START;
-                System.out.println("path cost: " + path_cost);
-                System.out.println("expanded nodes: " + expanded_nodes);
-                return;
+                if (finish) {
+                    while (cur.parent != null) {
+                        cur = cur.parent;
+                        maze[cur.x][cur.y] = cell.DOT;
+                        path_cost++;
+                    }
+                    maze[cur.x][cur.y] = cell.START;
+                    System.out.println("path cost: " + path_cost);
+                    System.out.println("expanded nodes: " + expanded_nodes);
+                    return;
+                }
             }
             else {
 
@@ -412,20 +461,20 @@ public class maze_solver {
            For now, just manually enter the size of the mazes..lol
          */
 
-        boolean[][] visited = new boolean[11][30]; //10,22    //11/30
-        cell[][] maze = new cell[11][30];
+        boolean[][] visited = new boolean[5][20]; //10,22    //11/30
+        cell[][] maze = new cell[5][20];
         Pair result = maze_parser(visited, maze);
         Node start = result.start;
-        Node end = result.end;
+        Vector<Node> storage = result.dots;
 
         // To test search algorithms call the corresponding function below.
         // test one at a time......
 
 
-      //A_star(start, end, maze, visited);
-      greedy_bfs(start, end, maze, visited);
-       //bfs(visited, maze, start);
-        //  dfs(visited, maze, start);
+      A_star(start, storage, maze, visited);
+      // greedy_bfs(start, end, maze, visited);
+      //bfs(visited, maze, start);
+      //  dfs(visited, maze, start);
 
 
 
