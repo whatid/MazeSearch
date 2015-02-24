@@ -261,12 +261,12 @@ public class maze_solver {
 
     // expands node that has the lowest value of the heuristic function.
 
-    private static void greedy_bfs(Node start, Node end, cell [][] maze, boolean [][] visited) {
+    private static void greedy_bfs(Node start, Vector<Node> storage, cell [][] maze, boolean [][] visited) {
         Comparator<Node> comp = new EstimatedCost();
         PriorityQueue<Node> q = new PriorityQueue<Node>(1000, comp);
         int path_cost = 0;
         int expanded_nodes = 0;
-        start.estimated_cost = heuristic(start, end);
+        start.estimated_cost = heuristic(start, storage.elementAt(0));
         q.add(start);
 
         while (!q.isEmpty()) {
@@ -276,9 +276,9 @@ public class maze_solver {
             expanded_nodes++;
             //mark as visited
             visited[cur.x][cur.y] = true;
-            if ( maze[cur.x][cur.y] != cell.END  ){
-                maze[cur.x][cur.y] = cell.SPAN;
-            }
+          //  if ( maze[cur.x][cur.y] != cell.END  ){
+          //      maze[cur.x][cur.y] = cell.SPAN;
+          //  }
 
 
 
@@ -302,28 +302,28 @@ public class maze_solver {
                 if (cur.x + 1 < maze.length) {
                     if (maze[cur.x + 1][cur.y] != cell.WALL && !visited[cur.x + 1][cur.y]) {
                         Node temp = new Node(cur.x + 1, cur.y, cur);
-                        temp.estimated_cost = heuristic(temp, end);
+                        temp.estimated_cost = heuristic(temp, storage.elementAt(0));
                         q.add(temp);
                     }
                 }
                 if (cur.x - 1 >= 0) {
                     if (maze[cur.x - 1][cur.y] != cell.WALL && !visited[cur.x - 1][cur.y]) {
                         Node temp = new Node(cur.x - 1, cur.y, cur);
-                        temp.estimated_cost = heuristic(temp, end);
+                        temp.estimated_cost = heuristic(temp, storage.elementAt(0));
                         q.add(temp);
                     }
                 }
                 if (cur.y + 1 < maze[0].length) {
                     if (maze[cur.x][cur.y + 1] != cell.WALL && !visited[cur.x][cur.y + 1]) {
                         Node temp = new Node(cur.x, cur.y + 1, cur);
-                        temp.estimated_cost = heuristic(temp, end);
+                        temp.estimated_cost = heuristic(temp, storage.elementAt(0));
                         q.add(temp);
                     }
                 }
                 if (cur.y - 1 >= 0) {
                     if (maze[cur.x][cur.y - 1] != cell.WALL && !visited[cur.x][cur.y - 1]) {
                         Node temp = new Node(cur.x, cur.y - 1, cur);
-                        temp.estimated_cost = heuristic(temp, end);
+                        temp.estimated_cost = heuristic(temp, storage.elementAt(0));
                         q.add(temp);
                     }
                 }
@@ -522,9 +522,9 @@ public class maze_solver {
 
 
       //A_star(start, storage, maze, visited);
-      // greedy_bfs(start, end, maze, visited);
+       greedy_bfs(start, storage, maze, visited);
       //bfs(visited, maze, start);
-        dfs(visited, maze, start);
+      //  dfs(visited, maze, start);
 
         //print to console
 
