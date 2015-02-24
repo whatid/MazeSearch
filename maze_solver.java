@@ -67,7 +67,7 @@ public class maze_solver {
          */
 
         //System.out.println(System.getProperty("user.dir"));
-        File file = new File("/Users/fwirjo/IdeaProjects/MazeSearch/smallMaze.txt");
+        File file = new File("/Users/fwirjo/IdeaProjects/MazeSearch/bigMaze.txt");
 
         try {
             Scanner it = new Scanner(file);
@@ -367,7 +367,7 @@ public class maze_solver {
 
         Node end = nextGoal;
 
-        System.out.println("start-x: " + start.x + ", start-y: " + start.y);
+     //   System.out.println("start-x: " + start.x + ", start-y: " + start.y);
 
         // check if there are more dots to the left or the right of starting position
 
@@ -383,8 +383,8 @@ public class maze_solver {
 
             if (maze[cur.x][cur.y] == cell.DOT) {
                 //System.out.println(storage.size());
-                System.out.println("goal-x: " + cur.x + ", goal-y: " + cur.y);
-                maze[cur.x][cur.y] = cell.NUMBER;
+               // System.out.println("goal-x: " + cur.x + ", goal-y: " + cur.y);
+              //  maze[cur.x][cur.y] = cell.NUMBER;
 
                 Node tempnode = cur;
                 while (tempnode.parent != null) {
@@ -394,7 +394,7 @@ public class maze_solver {
                         continue;
                     }
                     else {
-                        maze[tempnode.x][tempnode.y] = cell.SPAN;
+                        maze[tempnode.x][tempnode.y] = cell.DOT;
                         path_cost++;
                     }
 
@@ -404,8 +404,8 @@ public class maze_solver {
                     startNode = false;
                 }
                 storage.remove(index);
-                System.out.println("tempnode coords " + "x: " + tempnode.x + "y: " + tempnode.y);
-                System.out.println("curnode coords " + "x: " + cur.x + "y: " + cur.y);
+             //   System.out.println("tempnode coords " + "x: " + tempnode.x + "y: " + tempnode.y);
+              //  System.out.println("curnode coords " + "x: " + cur.x + "y: " + cur.y);
                 if (storage.size() == 0) {
                     System.out.println("path cost: " + path_cost);
                     System.out.println("expanded nodes: " + expanded_nodes);
@@ -510,8 +510,8 @@ public class maze_solver {
            For now, just manually enter the size of the mazes..lol
          */
 
-        boolean[][] visited = new boolean[10][22]; //10,22    //11/30   //5/20
-        cell[][] maze = new cell[10][22];
+        boolean[][] visited = new boolean[37][37]; //10,22    //11/30   //5/20
+        cell[][] maze = new cell[37][37];
         Pair result = maze_parser(visited, maze);
         Node start = result.start;
         Vector<Node> storage = result.dots;
@@ -521,10 +521,10 @@ public class maze_solver {
         // test one at a time......
 
 
-      //A_star(start, storage, maze, visited);
-       greedy_bfs(start, storage, maze, visited);
+      A_star(start, storage, maze, visited);
+      // greedy_bfs(start, storage, maze, visited);
       //bfs(visited, maze, start);
-      //  dfs(visited, maze, start);
+       // dfs(visited, maze, start);
 
         //print to console
 
