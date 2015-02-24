@@ -29,13 +29,27 @@ public class maze_solver {
     private static class Node {
         Position pos;
         int path_cost, estimated_cost, total_cost;
-        Node[] collected, uncollected; // Hold path's collected & uncollected dots
+        ArrayList<Position> collected, uncollected; // Hold path's uncollected dots
         Node parent;
 
+        public Node(int x, int y) {
+            pos = new Position(x,y);
+            parent = null;
+        }
+
         public Node(int x, int y, Node parent) {
-            pos.x = x;
-            pos.y = y;
+            pos = new Position(x,y);
             this.parent = parent;
+        }
+
+        @Override
+        public String toString(){
+            return String.format("NodeInfo:\nPosition: (%d, %d)\nPath Cost: %d\nTotal Cost: %d\nUncollected Size: %d\n",
+                                pos.x, pos.y, path_cost, total_cost, uncollected.size());
+        }
+
+        private void print(){
+            System.out.println(this);
         }
     }
 
@@ -46,7 +60,8 @@ public class maze_solver {
 
         public MinimumSpanningTree(ArrayList<Position> v){
             this.v = v;
-            this.e = reduce(v, createEdges(v));
+            //this.e = reduce(v, createEdges(v));
+            this.e = buildMST(v);
         }
 
         class Edge implements Comparable<Edge>{
@@ -75,17 +90,21 @@ public class maze_solver {
             }
         }
 
-        public PriorityQueue<Edge> createEdges(ArrayList<Position> v){
+        public ArrayList<Edge> buildMST(ArrayList<Position> v){
+            if(v.isEmpty())
+                System.out.println("ERROR1");
+
             PriorityQueue<Edge> pq = new PriorityQueue<Edge>();
-            for(int i = 0; i < v.size() - 1; i++){
-                for(int j = i + 1; j < v.size(); j++){
+            for(int i = 0; i < v.size(); i++){
+                for(int j = 1; j < v.size(); j++){
                     Edge newEdge = new Edge(v.get(i), v.get(j));
                     pq.add(newEdge);
+                    //String s = new String().format("(i,j) = (%d,%d)", i, j);
+                    //System.out.println(s);
                 }
             }
-            return pq;
-        }
-        public ArrayList<Edge> reduce(ArrayList<Position> v, PriorityQueue<Edge> pq){
+            // Edge asdf = pq.peek();
+            // System.out.println(asdf.toString());
 
             // Keep track of connected components (start all unconnected)
             HashMap<Position, Set<Position>> kForest = new HashMap<Position, Set<Position>>();
@@ -98,6 +117,8 @@ public class maze_solver {
             ArrayList<Edge> edgesMST = new ArrayList<Edge>();
             // Add the shortest edges until all vertices are connected
             while(true){
+                if(pq.peek() == null)
+                    System.out.println("ERROR2");
                 Edge testEdge = pq.poll();
                 Set<Position> connectedToV1 = kForest.get(testEdge.v1);
                 Set<Position> connectedToV2 = kForest.get(testEdge.v2);
@@ -123,6 +144,14 @@ public class maze_solver {
                 System.out.println(edge);
             }
         }
+
+        private int weight(){
+            int w = 0;
+            for(Edge edge: e){
+                w += edge.weight;
+            }
+            return w;
+        }
     }
 
     private static class Position {
@@ -133,21 +162,48 @@ public class maze_solver {
             this.x = x;
             this.y = y;
         }
+
+        //@Override
+        public boolean equalTo(Position other){
+            if(this.x == other.x && this.y == other.y)
+                return true;
+
+            else return false;
+        }
     }
 
     // Maze to be populated by maze_parser and passed as argument to searches
     private static class Maze{
         cell[][] maze;
-        boolean[][] visited;
+        int[][] visited;
+        /* Could add an array that counts how many times a dot has been collected
+            This would be used in the heuristic function to give a heavier weight
+            to dots that haven't been collected before.
+        */
+        //private ArrayList<int> timesCollected;
         private final Position start;
         private ArrayList<Position> dots;
+        private HashMap<Set<Position>, MinimumSpanningTree> dotsToMST;
 
-        public Maze(cell[][] maze, boolean[][] visited, Position start, ArrayList<Position> dots){
+        public Maze(cell[][] maze, int[][] visited, Position start, ArrayList<Position> dots,
+                    HashMap<Set<Position>, MinimumSpanningTree> hm){
             this.maze = maze;
             this.visited = visited;
             this.start = start;
             this.dots = dots;
+            this.dotsToMST = hm;
         }
+
+        @Override
+        public String toString(){
+            return String.format("MazeInfo:\nStart: (%d, %d)\nnumDots: %d",
+                                start.x, start.y, dots.size());
+        }
+
+        private void print(){
+            System.out.println(this);
+        }
+
     }
 
     //private static Pair maze_parser(boolean[][] visited, cell[][] maze) {
@@ -163,14 +219,15 @@ public class maze_solver {
 
         // Maze info to fill
         cell[][] maze = new cell[7][20];           // Manually change size
-        boolean[][] visited = new boolean[7][20];  // Manually change size
+        int[][] visited = new int[7][20];  // Manually change size
         Position start = null;
         ArrayList<Position> dots = new ArrayList<Position>();
+        HashMap<Set<Position>, MinimumSpanningTree> dotsToMST = new HashMap<Set<Position>, MinimumSpanningTree>();
 
         // initialize visited array
         for (int i = 0; i < visited.length; i++) {
             for (int j = 0; j < visited[i].length; j++)
-                visited[i][j] = false;
+                visited[i][j] = 0;
         }
 
         try {
@@ -204,10 +261,7 @@ public class maze_solver {
             error.printStackTrace();
         }
 
-        return new Maze(maze, visited, start, dots);
-
-        //result = new Pair(start, end);
-        //return result;
+        return new Maze(maze, visited, start, dots, dotsToMST);
     }
 /*
     private static void dfs(boolean[][] visited, cell[][] maze, Node start) {
@@ -223,16 +277,16 @@ public class maze_solver {
         while (!stack.isEmpty()) {
             Node cur = stack.pop();
             expanded_nodes++;
-            visited[cur.x][cur.y] = true;
+            visited[cur.pos.x][cur.pos.y] = true;
 
-            if ( maze[cur.x][cur.y] != cell.END  ){
-                maze[cur.x][cur.y] = cell.SPAN;
+            if ( maze[cur.pos.x][cur.pos.y] != cell.END  ){
+                maze[cur.pos.x][cur.pos.y] = cell.SPAN;
             }
 
 
 
             //found end point
-            if (maze[cur.x][cur.y] == cell.END) {
+            if (maze[cur.pos.x][cur.pos.y] == cell.END) {
                 end = cur;
                 while(end.parent != null){
                     end = end.parent;
@@ -246,24 +300,24 @@ public class maze_solver {
             } else {
 
                 //check all four neighbors
-                if (cur.x + 1 < maze.length) {
-                    if (maze[cur.x + 1][cur.y] != cell.WALL && !visited[cur.x + 1][cur.y]) {
-                        stack.push(new Node(cur.x + 1, cur.y, cur));
+                if (cur.pos.x + 1 < maze.length) {
+                    if (maze[cur.pos.x + 1][cur.pos.y] != cell.WALL && !visited[cur.pos.x + 1][cur.pos.y]) {
+                        stack.push(new Node(cur.pos.x + 1, cur.pos.y, cur));
                     }
                 }
-                if (cur.x - 1 >= 0) {
-                    if (maze[cur.x - 1][cur.y] != cell.WALL && !visited[cur.x - 1][cur.y]) {
-                        stack.push(new Node(cur.x - 1, cur.y, cur));
+                if (cur.pos.x - 1 >= 0) {
+                    if (maze[cur.pos.x - 1][cur.pos.y] != cell.WALL && !visited[cur.pos.x - 1][cur.pos.y]) {
+                        stack.push(new Node(cur.pos.x - 1, cur.pos.y, cur));
                     }
                 }
-                if (cur.y + 1 < maze[0].length) {
-                    if (maze[cur.x][cur.y + 1] != cell.WALL && !visited[cur.x][cur.y + 1]) {
-                        stack.push(new Node(cur.x, cur.y + 1, cur));
+                if (cur.pos.y + 1 < maze[0].length) {
+                    if (maze[cur.pos.x][cur.pos.y + 1] != cell.WALL && !visited[cur.pos.x][cur.pos.y + 1]) {
+                        stack.push(new Node(cur.pos.x, cur.pos.y + 1, cur));
                     }
                 }
-                if (cur.y - 1 >= 0) {
-                    if (maze[cur.x][cur.y - 1] != cell.WALL && !visited[cur.x][cur.y - 1]) {
-                        stack.push(new Node(cur.x, cur.y - 1, cur));
+                if (cur.pos.y - 1 >= 0) {
+                    if (maze[cur.pos.x][cur.pos.y - 1] != cell.WALL && !visited[cur.pos.x][cur.pos.y - 1]) {
+                        stack.push(new Node(cur.pos.x, cur.pos.y - 1, cur));
                     }
                 }
             }
@@ -283,16 +337,16 @@ public class maze_solver {
         while (!q.isEmpty()) {
             Node cur = q.remove();
             expanded_nodes++;
-            visited[cur.x][cur.y] = true;
+            visited[cur.pos.x][cur.pos.y] = true;
 
-            if ( maze[cur.x][cur.y] != cell.END  ){
-                maze[cur.x][cur.y] = cell.SPAN;
+            if ( maze[cur.pos.x][cur.pos.y] != cell.END  ){
+                maze[cur.pos.x][cur.pos.y] = cell.SPAN;
             }
 
 
 
             //found end point
-            if (maze[cur.x][cur.y] == cell.END) {
+            if (maze[cur.pos.x][cur.pos.y] == cell.END) {
                 end = cur;
                 while(end.parent != null){
                     end = end.parent;
@@ -306,24 +360,24 @@ public class maze_solver {
             } else {
 
                 //check all four neighbors
-                if (cur.x + 1 < maze.length) {
-                    if (maze[cur.x + 1][cur.y] != cell.WALL && !visited[cur.x + 1][cur.y]) {
-                        q.add(new Node(cur.x + 1, cur.y, cur));
+                if (cur.pos.x + 1 < maze.length) {
+                    if (maze[cur.pos.x + 1][cur.pos.y] != cell.WALL && !visited[cur.pos.x + 1][cur.pos.y]) {
+                        q.add(new Node(cur.pos.x + 1, cur.pos.y, cur));
                     }
                 }
-                if (cur.x - 1 >= 0) {
-                    if (maze[cur.x - 1][cur.y] != cell.WALL && !visited[cur.x - 1][cur.y]) {
-                        q.add(new Node(cur.x - 1, cur.y, cur));
+                if (cur.pos.x - 1 >= 0) {
+                    if (maze[cur.pos.x - 1][cur.pos.y] != cell.WALL && !visited[cur.pos.x - 1][cur.pos.y]) {
+                        q.add(new Node(cur.pos.x - 1, cur.pos.y, cur));
                     }
                 }
-                if (cur.y + 1 < maze[0].length) {
-                    if (maze[cur.x][cur.y + 1] != cell.WALL && !visited[cur.x][cur.y + 1]) {
-                        q.add(new Node(cur.x, cur.y + 1, cur));
+                if (cur.pos.y + 1 < maze[0].length) {
+                    if (maze[cur.pos.x][cur.pos.y + 1] != cell.WALL && !visited[cur.pos.x][cur.pos.y + 1]) {
+                        q.add(new Node(cur.pos.x, cur.pos.y + 1, cur));
                     }
                 }
-                if (cur.y - 1 >= 0) {
-                    if (maze[cur.x][cur.y - 1] != cell.WALL && !visited[cur.x][cur.y - 1]) {
-                        q.add(new Node(cur.x, cur.y - 1, cur));
+                if (cur.pos.y - 1 >= 0) {
+                    if (maze[cur.pos.x][cur.pos.y - 1] != cell.WALL && !visited[cur.pos.x][cur.pos.y - 1]) {
+                        q.add(new Node(cur.pos.x, cur.pos.y - 1, cur));
                     }
                 }
             }
@@ -334,10 +388,6 @@ public class maze_solver {
         return (Math.abs(a.x - b.x) + Math.abs(a.y - b.y));
     }
 
-    private static int weightMST(ArrayList<Position> n){
-        return 0;
-    }
-
     private static int heuristic (Node cur, Maze m) {
         // 1. Manhattan Distance for a single dot endpoint:
         if(m.dots.size() == 1)
@@ -345,7 +395,29 @@ public class maze_solver {
 
         // 2. Heuristic for multiple dots:
         // h(n) = distance to nearest dot + weight of MST of all uncollected dots
-        return 0;
+        int distToNearest = 1000;
+
+        if(cur.uncollected.isEmpty())
+            return 0;
+
+        if(cur.uncollected.size() == 1)
+            return manhattanDist(cur.pos, cur.uncollected.get(0));
+
+        for(Position dot : cur.uncollected){
+            distToNearest = (manhattanDist(cur.pos, dot) < distToNearest)
+                            ? manhattanDist(cur.pos, dot) : distToNearest;
+        }
+
+        Set<Position> uncollectedSet = new HashSet<Position>(cur.uncollected);
+
+        if(!m.dotsToMST.containsKey(uncollectedSet)){
+            // Need to add this set to the HashMap
+            MinimumSpanningTree newMST = new MinimumSpanningTree(cur.uncollected);
+            m.dotsToMST.put(uncollectedSet, newMST);
+        }
+
+        return distToNearest + m.dotsToMST.get(uncollectedSet).weight();
+
     }
 
     public static class TotalCost implements Comparator<Node> {
@@ -392,22 +464,22 @@ public class maze_solver {
             Node cur = q.remove();
             expanded_nodes++;
             //mark as visited
-            visited[cur.x][cur.y] = true;
-            if ( maze[cur.x][cur.y] != cell.END  ){
-                maze[cur.x][cur.y] = cell.SPAN;
+            visited[cur.pos.x][cur.pos.y] = true;
+            if ( maze[cur.pos.x][cur.pos.y] != cell.END  ){
+                maze[cur.pos.x][cur.pos.y] = cell.SPAN;
             }
 
 
 
 
             // found end point
-            if (maze[cur.x][cur.y] == cell.END) {
+            if (maze[cur.pos.x][cur.pos.y] == cell.END) {
                 while(cur.parent != null){
                     cur = cur.parent;
-                    maze[cur.x][cur.y] = cell.DOT;
+                    maze[cur.pos.x][cur.pos.y] = cell.DOT;
                     path_cost++;
                 }
-                maze[cur.x][cur.y] = cell.START;
+                maze[cur.pos.x][cur.pos.y] = cell.START;
                 System.out.println("path cost: " + path_cost);
                 System.out.println("expanded nodes: " + expanded_nodes);
                 return;
@@ -416,30 +488,30 @@ public class maze_solver {
 
                 // check neighbors, add to queue;
 
-                if (cur.x + 1 < maze.length) {
-                    if (maze[cur.x + 1][cur.y] != cell.WALL && !visited[cur.x + 1][cur.y]) {
-                        Node temp = new Node(cur.x + 1, cur.y, cur);
+                if (cur.pos.x + 1 < maze.length) {
+                    if (maze[cur.pos.x + 1][cur.pos.y] != cell.WALL && !visited[cur.pos.x + 1][cur.pos.y]) {
+                        Node temp = new Node(cur.pos.x + 1, cur.pos.y, cur);
                         temp.estimated_cost = heuristic(temp, end);
                         q.add(temp);
                     }
                 }
-                if (cur.x - 1 >= 0) {
-                    if (maze[cur.x - 1][cur.y] != cell.WALL && !visited[cur.x - 1][cur.y]) {
-                        Node temp = new Node(cur.x - 1, cur.y, cur);
+                if (cur.pos.x - 1 >= 0) {
+                    if (maze[cur.pos.x - 1][cur.pos.y] != cell.WALL && !visited[cur.pos.x - 1][cur.pos.y]) {
+                        Node temp = new Node(cur.pos.x - 1, cur.pos.y, cur);
                         temp.estimated_cost = heuristic(temp, end);
                         q.add(temp);
                     }
                 }
-                if (cur.y + 1 < maze[0].length) {
-                    if (maze[cur.x][cur.y + 1] != cell.WALL && !visited[cur.x][cur.y + 1]) {
-                        Node temp = new Node(cur.x, cur.y + 1, cur);
+                if (cur.pos.y + 1 < maze[0].length) {
+                    if (maze[cur.pos.x][cur.pos.y + 1] != cell.WALL && !visited[cur.pos.x][cur.pos.y + 1]) {
+                        Node temp = new Node(cur.pos.x, cur.pos.y + 1, cur);
                         temp.estimated_cost = heuristic(temp, end);
                         q.add(temp);
                     }
                 }
-                if (cur.y - 1 >= 0) {
-                    if (maze[cur.x][cur.y - 1] != cell.WALL && !visited[cur.x][cur.y - 1]) {
-                        Node temp = new Node(cur.x, cur.y - 1, cur);
+                if (cur.pos.y - 1 >= 0) {
+                    if (maze[cur.pos.x][cur.pos.y - 1] != cell.WALL && !visited[cur.pos.x][cur.pos.y - 1]) {
+                        Node temp = new Node(cur.pos.x, cur.pos.y - 1, cur);
                         temp.estimated_cost = heuristic(temp, end);
                         q.add(temp);
                     }
@@ -448,95 +520,129 @@ public class maze_solver {
             }
         }
     }
-
+*/
     //private static void A_star (Node start, Node end, cell [][] maze, boolean[][] visited) {
     private static void A_star (Maze m) {
 
         Comparator<Node> comp = new TotalCost();
         PriorityQueue<Node> q = new PriorityQueue<Node>(1000, comp);
 
-        Node start = m.start;
+        Node start = new Node(m.start.x, m.start.y);
+        start.uncollected = new ArrayList<Position>(m.dots);
         cell[][] maze = m.maze;
-        boolean[][] visited = m.visited;
+        int[][] visited = m.visited;
 
         q.add(start);
         int path_cost = 0;
         int expanded_nodes = 0;
         start.path_cost = 0;
-        //start.total_cost = start.path_cost + heuristic(start, end);
-        start.total_cost = start.path_cost + heuristic(start, maze);
+        start.total_cost = start.path_cost + heuristic(start, m);
+
+        int maxVisited = 50;
 
         while (!q.isEmpty()) {
 
             // remove from open set and mark visited
-            Node cur = q.remove();
+            Node cur = q.poll();
+
+            //cur.print();
+
             expanded_nodes++;
-            visited[cur.x][cur.y] = true;
+            visited[cur.pos.x][cur.pos.y] = visited[cur.pos.x][cur.pos.y] + 1;
 
-            if ( maze[cur.x][cur.y] != cell.END  ){
-                maze[cur.x][cur.y] = cell.SPAN;
+            /*
+            if ( maze[cur.pos.x][cur.pos.y] != cell.DOT ){
+                maze[cur.pos.x][cur.pos.y] = cell.SPAN;
             }
-
+            */
 
             // Check should change to uncollected.isEmpty()
             if(cur.uncollected.isEmpty()){
                 while(cur.parent != null){
-                    cur = cur.parent;
-                    maze[cur.x][cur.y] = cell.DOT;
+                    int dotCount = 0;
+
+                    boolean isDot = false;
+                    for(Position p : m.dots){
+                        if(cur.pos.equalTo(p)){
+                            dotCount++;
+                            isDot = true;
+                            break;
+                        }
+                    }
+                    maze[cur.pos.x][cur.pos.y] = (isDot) ? cell.SPAN : cell.DOT;
                     path_cost++;
+                    cur = cur.parent;
                 }
-                maze[cur.x][cur.y] = cell.START;
+                maze[cur.pos.x][cur.pos.y] = cell.START;
                 System.out.println("path cost: " + path_cost);
                 System.out.println("expanded nodes: " + expanded_nodes);
                 return;
             }
 
-            if(maze[cur.x][cur.y] == cell.END){
-
-            }
-
             // check all four neighbors
-            if (cur.x + 1 < maze.length) {
-                if (maze[cur.x + 1][cur.y] != cell.WALL && !visited[cur.x + 1][cur.y]) {
-                    Node temp = new Node(cur.x + 1, cur.y, cur);
+            if (cur.pos.x + 1 < maze.length) {
+                if (maze[cur.pos.x + 1][cur.pos.y] != cell.WALL && visited[cur.pos.x + 1][cur.pos.y] < maxVisited) {
+                    Node temp = new Node(cur.pos.x + 1, cur.pos.y, cur);
                     temp.path_cost = cur.path_cost + 1;
-                    temp.total_cost = temp.path_cost + heuristic(temp, end);
+                    temp.uncollected = new ArrayList<Position>();
+                    for(Position p : cur.uncollected){
+                        if(!p.equalTo(temp.pos))
+                            temp.uncollected.add(p);
+                    }
+                    // if(maze[cur.pos.x + 1][cur.pos.y] == cell.DOT)
+                    //     temp.uncollected.remove(temp.pos);
+                    temp.total_cost = temp.path_cost + heuristic(temp, m);
                     q.add(temp);
                 }
             }
-            if (cur.x - 1 >= 0) {
-                if (maze[cur.x - 1][cur.y] != cell.WALL && !visited[cur.x - 1][cur.y]) {
-                    Node temp = new Node(cur.x - 1, cur.y, cur);
+            if (cur.pos.x - 1 >= 0) {
+                if (maze[cur.pos.x - 1][cur.pos.y] != cell.WALL && visited[cur.pos.x - 1][cur.pos.y] < maxVisited) {
+                    Node temp = new Node(cur.pos.x - 1, cur.pos.y, cur);
                     temp.path_cost = cur.path_cost + 1;
-                    temp.total_cost = temp.path_cost + heuristic(temp, end);
+                    temp.uncollected = new ArrayList<Position>();
+                    for(Position p : cur.uncollected){
+                        if(!p.equalTo(temp.pos))
+                            temp.uncollected.add(p);
+                    }
+                    temp.total_cost = temp.path_cost + heuristic(temp, m);
                     q.add(temp);
                 }
             }
-            if (cur.y + 1 < maze[0].length) {
-                if (maze[cur.x][cur.y + 1] != cell.WALL && !visited[cur.x][cur.y + 1]) {
-                    Node temp = new Node(cur.x, cur.y + 1, cur);
+            if (cur.pos.y + 1 < maze[0].length) {
+                if (maze[cur.pos.x][cur.pos.y + 1] != cell.WALL && visited[cur.pos.x][cur.pos.y + 1] < maxVisited) {
+                    Node temp = new Node(cur.pos.x, cur.pos.y + 1, cur);
                     temp.path_cost = cur.path_cost + 1;
-                    temp.total_cost = temp.path_cost + heuristic(temp, end);
+                    temp.uncollected = new ArrayList<Position>();
+                    for(Position p : cur.uncollected){
+                        if(!p.equalTo(temp.pos))
+                            temp.uncollected.add(p);
+                    }
+                    temp.total_cost = temp.path_cost + heuristic(temp, m);
                     q.add(temp);
                 }
             }
-            if (cur.y - 1 >= 0) {
-                if (maze[cur.x][cur.y - 1] != cell.WALL && !visited[cur.x][cur.y - 1]) {
-                    Node temp = new Node(cur.x, cur.y - 1, cur);
+            if (cur.pos.y - 1 >= 0) {
+                if (maze[cur.pos.x][cur.pos.y - 1] != cell.WALL && visited[cur.pos.x][cur.pos.y - 1] < maxVisited) {
+                    Node temp = new Node(cur.pos.x, cur.pos.y - 1, cur);
                     temp.path_cost = cur.path_cost + 1;
-                    temp.total_cost = temp.path_cost + heuristic(temp, end);
+                    temp.uncollected = new ArrayList<Position>();
+                    for(Position p : cur.uncollected){
+                        if(!p.equalTo(temp.pos))
+                            temp.uncollected.add(p);
+                    }
+                    temp.total_cost = temp.path_cost + heuristic(temp, m);
                     q.add(temp);
                 }
             }
         }
     }
-*/
+
     public static void main(String[] args) {
 
         Maze m = maze_parser();
 
         // Some tests
-
+        /*
         for(Position p : m.dots){
             System.out.println(String.format("(%d, %d)", p.x, p.y));
         }
@@ -544,11 +650,12 @@ public class maze_solver {
         MinimumSpanningTree mst = new MinimumSpanningTree(m.dots);
         mst.print();
 
-
+        m.print();
+        */
         // To test search algorithms call the corresponding function below.
         // test one at a time......
 
-        //A_star(m);
+        A_star(m);
         //greedy_bfs(m);
         //bfs(m);
         //dfs(m);
