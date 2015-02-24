@@ -20,7 +20,7 @@ public class maze_solver {
 
 
     public enum cell {
-        WALL, SPACE, START, END, DOT, SPAN, NUMBER
+        WALL, SPACE, START, END, DOT, SPAN, NUMBER     //use these name to describe the maze
     }
 
     private static class Node {
@@ -59,7 +59,7 @@ public class maze_solver {
         //variable to hold return values
         Pair result;
         Node start = null;
-        Vector<Node> storage = new Vector<Node>();
+        Vector<Node> storage = new Vector<Node>();    //storge all the dots we need in part3, can also store on node so out code can run for pat 1 and 2
 
         // initialize visited array
         for (int i = 0; i < visited.length; i++) {
@@ -74,7 +74,7 @@ public class maze_solver {
          */
 
         //System.out.println(System.getProperty("user.dir"));
-        File file = new File("/Users/fwirjo/IdeaProjects/MazeSearch/smallSearch.txt");
+        File file = new File("/Users/donezio/IdeaProjects/MazeSearch/big.txt");
 
         try {
             Scanner it = new Scanner(file);
@@ -115,16 +115,19 @@ public class maze_solver {
 
         int path_cost = 0;
         int expanded_nodes = 0;
-        Deque<Node> stack = new LinkedList<Node>();
+        Deque<Node> stack = new LinkedList<Node>();       //linkedlist as a stack
 
-        stack.push(start);
+        stack.push(start);                            //add the first node to the stack
 
         Node end = null;
 
-        while (!stack.isEmpty()) {
-            Node cur = stack.pop();
+        while (!stack.isEmpty()) {                       //while there is still nodes on the stack
+            Node cur = stack.pop();                      //pop the node
             expanded_nodes++;
-            visited[cur.x][cur.y] = true;
+            visited[cur.x][cur.y] = true;               //marked it as visited
+
+
+           //a piece of code to print the expanded path
 
            // if ( maze[cur.x][cur.y] != cell.END  ){
            //     maze[cur.x][cur.y] = cell.SPAN;
@@ -136,35 +139,35 @@ public class maze_solver {
             if (maze[cur.x][cur.y] == cell.DOT) {
                 end = cur;
                 while(end.parent != null){
-                    end = end.parent;
+                    end = end.parent;                        //find back its  parent and then print the path
                     maze[end.x][end.y] = cell.DOT;
-                    path_cost++;
+                    path_cost++;                              //path cost plus one
                 }
-                maze[end.x][end.y] = cell.START;
+                maze[end.x][end.y] = cell.START;              //get back the start point
                 System.out.println("path cost: " + path_cost);
                 System.out.println("expanded nodes: " + expanded_nodes);
                 return;
             } else {
 
-                //check all four neighbors
+                //check all four neighbors,if it is inside the maze, not visited and not a wall, we will process it
                 if (cur.x + 1 < maze.length) {
                     if (maze[cur.x + 1][cur.y] != cell.WALL && !visited[cur.x + 1][cur.y]) {
-                        stack.push(new Node(cur.x + 1, cur.y, cur));
+                        stack.push(new Node(cur.x + 1, cur.y, cur));       //push on stack
                     }
                 }
                 if (cur.x - 1 >= 0) {
                     if (maze[cur.x - 1][cur.y] != cell.WALL && !visited[cur.x - 1][cur.y]) {
-                        stack.push(new Node(cur.x - 1, cur.y, cur));
+                        stack.push(new Node(cur.x - 1, cur.y, cur));          //push on stack
                     }
                 }
                 if (cur.y + 1 < maze[0].length) {
                     if (maze[cur.x][cur.y + 1] != cell.WALL && !visited[cur.x][cur.y + 1]) {
-                        stack.push(new Node(cur.x, cur.y + 1, cur));
+                        stack.push(new Node(cur.x, cur.y + 1, cur));          //push on stack
                     }
                 }
                 if (cur.y - 1 >= 0) {
                     if (maze[cur.x][cur.y - 1] != cell.WALL && !visited[cur.x][cur.y - 1]) {
-                        stack.push(new Node(cur.x, cur.y - 1, cur));
+                        stack.push(new Node(cur.x, cur.y - 1, cur));          //push on stack
                     }
                 }
             }
@@ -173,19 +176,21 @@ public class maze_solver {
 
     private static void bfs(boolean[][] visited, cell[][] maze, Node start) {
 
-        Queue<Node> q = new LinkedList<Node>();
+        Queue<Node> q = new LinkedList<Node>();      //queue to store the node we are going to use
 
-        q.add(start);
+        q.add(start);                            //add the start point as the first node
 
-        int path_cost = 0;
-        int expanded_nodes = 0;
-        Node end = null;
+        int path_cost = 0;                       //initial path cost
+        int expanded_nodes = 0;                  //initial expanded nodes
+        Node end = null;                         //end node is NULL at first
 
         while (!q.isEmpty()) {
-            Node cur = q.remove();
+            Node cur = q.remove();                 //we work on the first node
             expanded_nodes++;
-            visited[cur.x][cur.y] = true;
+            visited[cur.x][cur.y] = true;          //marked as visited
 
+
+         //we try to print out the dot expanded first but then change it
            // if ( maze[cur.x][cur.y] != cell.END  ){
            //     maze[cur.x][cur.y] = cell.SPAN;
            // }
@@ -193,45 +198,47 @@ public class maze_solver {
 
 
             //found end point
-            if (maze[cur.x][cur.y] == cell.DOT) {
-                end = cur;
-                while(end.parent != null){
+            if (maze[cur.x][cur.y] == cell.DOT) {     //if this is a dot
+                end = cur;                            //then it is a end point
+                while(end.parent != null){             //this while loop finds the parent of the node and then print the path
                     end = end.parent;
                     maze[end.x][end.y] = cell.DOT;
-                    path_cost++;
+                    path_cost++;                      //increase path cost
                 }
-                maze[end.x][end.y] = cell.START;
+                maze[end.x][end.y] = cell.START;       //print back the start point P
+                //two lines for output
                 System.out.println("path cost:" + path_cost);
                 System.out.println("expanded nodes: " + expanded_nodes);
                 return;
-            } else {
+            } else {                                  //if we didn't find the end point
 
-                //check all four neighbors
+                //check all four neighbors, if it is inside the maze and not a wall and not a visited node
+                //we add it to the queue then process it next time//
                 if (cur.x + 1 < maze.length) {
                     if (maze[cur.x + 1][cur.y] != cell.WALL && !visited[cur.x + 1][cur.y]) {
-                        q.add(new Node(cur.x + 1, cur.y, cur));
+                        q.add(new Node(cur.x + 1, cur.y, cur));    //add to queue
                     }
                 }
                 if (cur.x - 1 >= 0) {
                     if (maze[cur.x - 1][cur.y] != cell.WALL && !visited[cur.x - 1][cur.y]) {
-                        q.add(new Node(cur.x - 1, cur.y, cur));
+                        q.add(new Node(cur.x - 1, cur.y, cur));   // add to queue
                     }
                 }
                 if (cur.y + 1 < maze[0].length) {
                     if (maze[cur.x][cur.y + 1] != cell.WALL && !visited[cur.x][cur.y + 1]) {
-                        q.add(new Node(cur.x, cur.y + 1, cur));
+                        q.add(new Node(cur.x, cur.y + 1, cur));   //add to queue
                     }
                 }
                 if (cur.y - 1 >= 0) {
                     if (maze[cur.x][cur.y - 1] != cell.WALL && !visited[cur.x][cur.y - 1]) {
-                        q.add(new Node(cur.x, cur.y - 1, cur));
+                        q.add(new Node(cur.x, cur.y - 1, cur));    //add to queue
                     }
                 }
             }
         }
     }
 
-
+//heuristic funtion
     private static int heuristic (Node cur, Node end) {
         //manhattan distance
         return (Math.abs(cur.x - end.x) + Math.abs(cur.y - end.y));
@@ -268,13 +275,15 @@ public class maze_solver {
 
     // expands node that has the lowest value of the heuristic function.
 
-    private static void greedy_bfs(Node start, Vector<Node> storage, cell [][] maze, boolean [][] visited) {
+
+
+    private static void greedy_bfs(Node start, Vector<Node> storage, cell [][] maze, boolean [][] visited) {   //storgae only contains on node for greedy_bfs
         Comparator<Node> comp = new EstimatedCost();
-        PriorityQueue<Node> q = new PriorityQueue<Node>(1000, comp);
+        PriorityQueue<Node> q = new PriorityQueue<Node>(1000, comp);         //use a priority queue
         int path_cost = 0;
         int expanded_nodes = 0;
-        start.estimated_cost = heuristic(start, storage.elementAt(0));
-        q.add(start);
+        start.estimated_cost = heuristic(start, storage.elementAt(0));       //use the heuristic function to get the estimated cost
+        q.add(start);                                                         //add start to process
 
         while (!q.isEmpty()) {
 
@@ -291,46 +300,46 @@ public class maze_solver {
 
 
             // found end point
-            if (maze[cur.x][cur.y] == cell.DOT) {
+            if (maze[cur.x][cur.y] == cell.DOT) {    //if we found the solution
                 while(cur.parent != null){
-                    cur = cur.parent;
-                    maze[cur.x][cur.y] = cell.DOT;
+                    cur = cur.parent;                   //get back its parents
+                    maze[cur.x][cur.y] = cell.DOT;       //print the path
                     path_cost++;
                 }
                 maze[cur.x][cur.y] = cell.START;
-                System.out.println("path cost: " + path_cost);
+                System.out.println("path cost: " + path_cost);          //out put on screen
                 System.out.println("expanded nodes: " + expanded_nodes);
                 return;
             }
             else {
 
-                // check neighbors, add to queue;
+                // check neighbors, if it is inisde the maze, not a wall, not visited, add to queue;
 
                 if (cur.x + 1 < maze.length) {
                     if (maze[cur.x + 1][cur.y] != cell.WALL && !visited[cur.x + 1][cur.y]) {
                         Node temp = new Node(cur.x + 1, cur.y, cur);
-                        temp.estimated_cost = heuristic(temp, storage.elementAt(0));
+                        temp.estimated_cost = heuristic(temp, storage.elementAt(0));  //calculate the cost
                         q.add(temp);
                     }
                 }
                 if (cur.x - 1 >= 0) {
                     if (maze[cur.x - 1][cur.y] != cell.WALL && !visited[cur.x - 1][cur.y]) {
                         Node temp = new Node(cur.x - 1, cur.y, cur);
-                        temp.estimated_cost = heuristic(temp, storage.elementAt(0));
+                        temp.estimated_cost = heuristic(temp, storage.elementAt(0)); //calculate the cost
                         q.add(temp);
                     }
                 }
                 if (cur.y + 1 < maze[0].length) {
                     if (maze[cur.x][cur.y + 1] != cell.WALL && !visited[cur.x][cur.y + 1]) {
                         Node temp = new Node(cur.x, cur.y + 1, cur);
-                        temp.estimated_cost = heuristic(temp, storage.elementAt(0));
+                        temp.estimated_cost = heuristic(temp, storage.elementAt(0));      //calculate the cost
                         q.add(temp);
                     }
                 }
                 if (cur.y - 1 >= 0) {
                     if (maze[cur.x][cur.y - 1] != cell.WALL && !visited[cur.x][cur.y - 1]) {
                         Node temp = new Node(cur.x, cur.y - 1, cur);
-                        temp.estimated_cost = heuristic(temp, storage.elementAt(0));
+                        temp.estimated_cost = heuristic(temp, storage.elementAt(0));   //calculate the cost
                         q.add(temp);
                     }
                 }
@@ -342,8 +351,8 @@ public class maze_solver {
     private static Vector<Node> A_star (Node start, Vector<Node> storage, cell [][] maze, boolean[][] visited) {
 
         Comparator<Node> comp = new TotalCost();
-        PriorityQueue<Node> q = new PriorityQueue<Node>(1000, comp);
-        q.add(start);
+        PriorityQueue<Node> q = new PriorityQueue<Node>(1000, comp);     //use a priority queue to store the node we need
+        q.add(start);                                                    //add it to queue
         int path_cost = 0;
         int expanded_nodes = 0;
         start.path_cost = 0;
@@ -352,14 +361,15 @@ public class maze_solver {
         Vector<Node> lol = new Vector<Node>();
 
         int idx = 0;
-        char letter = 'a';
+        char letter = 'a';                                                  //letter starts in lowercase a
        // Node alt = start;
 
         int min = 0;
         boolean first = true;
+        //use this for loop to find the closest node of all the nodes we need to visit
         Node nextGoal = null;
         for (int i = 0; i < storage.size(); i++) {
-            int temp = start.path_cost + heuristic(start, storage.elementAt(i));
+            int temp = start.path_cost + heuristic(start, storage.elementAt(i));              //heuristic of the A* funtion
             if (first) {
                 min = temp;
                 first = false;
@@ -373,7 +383,7 @@ public class maze_solver {
             }
         }
 
-        Node end = nextGoal;
+        Node end = nextGoal;                                       //we get the closest node as the next end point
 
      //   System.out.println("start-x: " + start.x + ", start-y: " + start.y);
 
@@ -450,7 +460,7 @@ public class maze_solver {
                     //if (cur.parent == null) System.out.println("wtf");
                     //System.out.println("new_start-x: " + (cur.parent).x + ", new_start-y: " + (cur.parent).y);
                     //alt = cur;
-                    q.clear();
+                    q.clear();       //after we reach a node, delete everything insde the queue and redo a*
                     q.add(cur);
                     continue;
                 }
@@ -473,7 +483,7 @@ public class maze_solver {
             }
             else {
 
-                // check all four neighbors
+                // check all four neighbors   if it is not a wall, it is inside the maze, and unvisited, we add it to process
                 if (cur.x + 1 < maze.length) {
                     if (maze[cur.x + 1][cur.y] != cell.WALL && !visited[cur.x + 1][cur.y]) {
                         Node temp = new Node(cur.x + 1, cur.y, cur);
@@ -519,8 +529,8 @@ public class maze_solver {
            For now, just manually enter the size of the mazes..lol
          */
 
-        boolean[][] visited = new boolean[5][20]; //10,22    //11/30   //5/20
-        cell[][] maze = new cell[5][20];
+        boolean[][] visited = new boolean[15][31]; //10,22    //11/30   //5/20
+        cell[][] maze = new cell[15][31];
         Pair result = maze_parser(visited, maze);
         Node start = result.start;
         Vector<Node> storage = result.dots;
@@ -536,6 +546,9 @@ public class maze_solver {
       //bfs(visited, maze, start);
        // dfs(visited, maze, start);
 
+
+
+
         //print to console
 
         StringBuilder output = new StringBuilder();
@@ -543,6 +556,8 @@ public class maze_solver {
         int rows = 0;
         //char letter = 'a';
 
+
+        //print out different char according to what's inside the maze
         while (rows < maze.length) {
             for (int y = 0; y < maze[0].length; y++) {
                 switch (maze[rows][y]) {
