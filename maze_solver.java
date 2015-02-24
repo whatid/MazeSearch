@@ -67,7 +67,7 @@ public class maze_solver {
          */
 
         //System.out.println(System.getProperty("user.dir"));
-        File file = new File("/Users/fwirjo/IdeaProjects/MazeSearch/bigSearch.txt");
+        File file = new File("/Users/fwirjo/IdeaProjects/MazeSearch/smallMaze.txt");
 
         try {
             Scanner it = new Scanner(file);
@@ -119,14 +119,14 @@ public class maze_solver {
             expanded_nodes++;
             visited[cur.x][cur.y] = true;
 
-            if ( maze[cur.x][cur.y] != cell.END  ){
-                maze[cur.x][cur.y] = cell.SPAN;
-            }
+           // if ( maze[cur.x][cur.y] != cell.END  ){
+           //     maze[cur.x][cur.y] = cell.SPAN;
+           // }
 
 
 
             //found end point
-            if (maze[cur.x][cur.y] == cell.END) {
+            if (maze[cur.x][cur.y] == cell.DOT) {
                 end = cur;
                 while(end.parent != null){
                     end = end.parent;
@@ -179,14 +179,14 @@ public class maze_solver {
             expanded_nodes++;
             visited[cur.x][cur.y] = true;
 
-            if ( maze[cur.x][cur.y] != cell.END  ){
-                maze[cur.x][cur.y] = cell.SPAN;
-            }
+           // if ( maze[cur.x][cur.y] != cell.END  ){
+           //     maze[cur.x][cur.y] = cell.SPAN;
+           // }
 
 
 
             //found end point
-            if (maze[cur.x][cur.y] == cell.END) {
+            if (maze[cur.x][cur.y] == cell.DOT) {
                 end = cur;
                 while(end.parent != null){
                     end = end.parent;
@@ -510,8 +510,8 @@ public class maze_solver {
            For now, just manually enter the size of the mazes..lol
          */
 
-        boolean[][] visited = new boolean[15][31]; //10,22    //11/30   //5/20
-        cell[][] maze = new cell[15][31];
+        boolean[][] visited = new boolean[10][22]; //10,22    //11/30   //5/20
+        cell[][] maze = new cell[10][22];
         Pair result = maze_parser(visited, maze);
         Node start = result.start;
         Vector<Node> storage = result.dots;
@@ -521,10 +521,10 @@ public class maze_solver {
         // test one at a time......
 
 
-      A_star(start, storage, maze, visited);
+      //A_star(start, storage, maze, visited);
       // greedy_bfs(start, end, maze, visited);
       //bfs(visited, maze, start);
-      //  dfs(visited, maze, start);
+        dfs(visited, maze, start);
 
         //print to console
 
