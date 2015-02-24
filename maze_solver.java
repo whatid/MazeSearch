@@ -28,11 +28,18 @@ public class maze_solver {
         int y;
         int path_cost, estimated_cost, total_cost, distance /* distance traversed to reach up to N other nodes */;
         Node parent;
+        char val;
 
         public Node(int x, int y, Node parent) {
             this.x = x;
             this.y = y;
             this.parent = parent;
+        }
+
+        public Node(int x, int y, char val) {
+            this.x = x;
+            this.y = y;
+            this.val = val;
         }
 
     }
@@ -67,7 +74,7 @@ public class maze_solver {
          */
 
         //System.out.println(System.getProperty("user.dir"));
-        File file = new File("/Users/fwirjo/IdeaProjects/MazeSearch/bigMaze.txt");
+        File file = new File("/Users/fwirjo/IdeaProjects/MazeSearch/smallSearch.txt");
 
         try {
             Scanner it = new Scanner(file);
@@ -332,7 +339,7 @@ public class maze_solver {
         }
     }
 
-    private static void A_star (Node start, Vector<Node> storage, cell [][] maze, boolean[][] visited) {
+    private static Vector<Node> A_star (Node start, Vector<Node> storage, cell [][] maze, boolean[][] visited) {
 
         Comparator<Node> comp = new TotalCost();
         PriorityQueue<Node> q = new PriorityQueue<Node>(1000, comp);
@@ -342,9 +349,10 @@ public class maze_solver {
         start.path_cost = 0;
         boolean startNode = true;
         int index = 0;
+        Vector<Node> lol = new Vector<Node>();
 
         int idx = 0;
-
+        char letter = 'a';
        // Node alt = start;
 
         int min = 0;
@@ -384,7 +392,8 @@ public class maze_solver {
             if (maze[cur.x][cur.y] == cell.DOT) {
                 //System.out.println(storage.size());
                // System.out.println("goal-x: " + cur.x + ", goal-y: " + cur.y);
-              //  maze[cur.x][cur.y] = cell.NUMBER;
+                maze[cur.x][cur.y] = cell.NUMBER;
+                lol.add(new Node(cur.x, cur.y, letter++));
 
                 Node tempnode = cur;
                 while (tempnode.parent != null) {
@@ -394,7 +403,7 @@ public class maze_solver {
                         continue;
                     }
                     else {
-                        maze[tempnode.x][tempnode.y] = cell.DOT;
+                        maze[tempnode.x][tempnode.y] = cell.SPAN;
                         path_cost++;
                     }
 
@@ -409,7 +418,7 @@ public class maze_solver {
                 if (storage.size() == 0) {
                     System.out.println("path cost: " + path_cost);
                     System.out.println("expanded nodes: " + expanded_nodes);
-                    return;
+                    return lol;
                 } else {
                     for (int a = 0; a < visited.length; a++) {
                         for (int b = 0; b < visited[a].length; b++)
@@ -501,7 +510,7 @@ public class maze_solver {
             }
         }
 
-
+        return lol;
     }
 
     public static void main(String[] args) {
@@ -510,18 +519,19 @@ public class maze_solver {
            For now, just manually enter the size of the mazes..lol
          */
 
-        boolean[][] visited = new boolean[37][37]; //10,22    //11/30   //5/20
-        cell[][] maze = new cell[37][37];
+        boolean[][] visited = new boolean[5][20]; //10,22    //11/30   //5/20
+        cell[][] maze = new cell[5][20];
         Pair result = maze_parser(visited, maze);
         Node start = result.start;
         Vector<Node> storage = result.dots;
+
 
 
         // To test search algorithms call the corresponding function below.
         // test one at a time......
 
 
-      A_star(start, storage, maze, visited);
+      Vector<Node> p = A_star(start, storage, maze, visited);
       // greedy_bfs(start, storage, maze, visited);
       //bfs(visited, maze, start);
        // dfs(visited, maze, start);
@@ -531,7 +541,7 @@ public class maze_solver {
         StringBuilder output = new StringBuilder();
 
         int rows = 0;
-        char letter = 'a';
+        //char letter = 'a';
 
         while (rows < maze.length) {
             for (int y = 0; y < maze[0].length; y++) {
@@ -549,7 +559,13 @@ public class maze_solver {
                         output.append("E");
                         break;
                     case NUMBER:
-                        output.append(letter++);
+                        for (int i = 0; i < p.size(); i++) {
+                            if (p.elementAt(i).x == rows && p.elementAt(i).y == y) {
+                                output.append(p.elementAt(i).val);
+                                break;
+                            }
+
+                        }
                         break;
                     case SPACE:
                         output.append(" ");
