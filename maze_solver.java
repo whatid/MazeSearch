@@ -406,6 +406,7 @@ public class maze_solver {
                 lol.add(new Node(cur.x, cur.y, letter++));
 
                 Node tempnode = cur;
+                //traceback from goal node to start node
                 while (tempnode.parent != null) {
                     tempnode = tempnode.parent;
                     if (maze[tempnode.x][tempnode.y] == cell.NUMBER || maze[tempnode.x][tempnode.y] == cell.START) {
@@ -433,7 +434,10 @@ public class maze_solver {
                     for (int a = 0; a < visited.length; a++) {
                         for (int b = 0; b < visited[a].length; b++)
                             visited[a][b] = false;
+
                     }
+
+                    //set current node to the new start node//
                     min= 0;
                     first = true;
                     nextGoal = null;
